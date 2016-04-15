@@ -659,6 +659,8 @@
 #define GNU_PROPERTY_STACK_SIZE 1
 /* No copy relocations against protected symbols.  */
 #define GNU_PROPERTY_NO_COPY_ON_PROTECTED 2
+/* Number of defined program properties.  */
+#define GNU_PROPERTY_NUM	2
 /* Processor-specific semantics, lo */
 #define GNU_PROPERTY_LOPROC	0xB0000000
 /* Processor-specific semantics, hi */
