@@ -1677,7 +1677,15 @@ typedef struct elf_section_list
   struct elf_section_list *  next;
 } elf_section_list;
   
-    
+typedef struct elf_property
+{
+  unsigned int type;
+  union
+    {
+      bfd_vma stack_size;
+    } u;
+} elf_property;
+
 /* Some private data is stashed away for future use using the tdata pointer
    in the bfd structure.  */
 
@@ -1757,6 +1765,8 @@ struct elf_obj_tdata
 
   /* Symbol buffer.  */
   void *symbuf;
+
+  elf_property properties[GNU_PROPERTY_NUM];
 
   obj_attribute known_obj_attributes[2][NUM_KNOWN_OBJ_ATTRIBUTES];
   obj_attribute_list *other_obj_attributes[2];
