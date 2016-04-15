@@ -41,6 +41,7 @@
   debugging information which (at the moment) objdump cannot.  */
 
 #include "sysdep.h"
+#include "bfd_stdint.h"
 #include <assert.h>
 #include <time.h>
 #include <zlib.h>
@@ -15327,6 +15328,8 @@ get_gnu_elf_note_type (unsigned e_type)
       return _("NT_GNU_BUILD_ID (unique build ID bitstring)");
     case NT_GNU_GOLD_VERSION:
       return _("NT_GNU_GOLD_VERSION (gold version)");
+    case NT_GNU_PROPERTY_0:
+      return _("NT_GNU_PROPERTY_0 (program property)");
     default:
       break;
     }
@@ -15409,6 +15412,74 @@ print_gnu_note (Elf_Internal_Note *pnote)
 	for (i = 0; i < pnote->descsz && pnote->descdata[i] != '\0'; ++i)
 	  printf ("%c", pnote->descdata[i]);
 	printf ("\n");
+      }
+      break;
+
+    case NT_GNU_PROPERTY_0:
+      {
+	unsigned char *descdata, *descend;
+	unsigned long pr_type, pr_datasz;
+	uintptr_t align_mask = is_32bit_elf ? 3 : 7;
+
+	if (pnote->descsz < 8)
+	  {
+	    printf (_("    <corrupt NT_GNU_PROPERTY_0>\n"));
+	    break;
+	  }
+
+	descdata = (unsigned char *) pnote->descdata;
+	descend = descdata + pnote->descsz;
+	while (descdata < descend)
+	  {
+	    pr_type = byte_get (descdata, 4);
+	    pr_datasz = byte_get (descdata + 4, 4);
+
+	    /* Property is sorted by pr_type.  */
+	    if (pr_type > GNU_PROPERTY_NUM)
+	      break;
+
+	    if ((descdata + pr_datasz) >= descend)
+	      {
+		printf (_("    <corrupt NT_GNU_PROPERTY_0 type: %ld>\n"),
+			pr_type);
+		break;
+	      }
+
+	    switch (pr_type)
+	      {
+	      default:
+		abort ();
+
+	      case GNU_PROPERTY_NO_COPY_ON_PROTECTED:
+		if (pr_datasz != 0)
+		  printf (_("    <corrupt GNU_PROPERTY_NO_COPY_ON_PROTECTED>\n"));
+		else
+		  printf (_("    GNU_PROPERTY_NO_COPY_ON_PROTECTED\n"));
+		break;
+
+	      case GNU_PROPERTY_STACK_SIZE:
+		switch (pr_datasz)
+		  {
+		  case 4:
+		    printf (_("    Stack size: %d\n"),
+			    (unsigned int) byte_get (descdata + 8, 4));
+		    break;
+		  case 8:
+		    printf (_("    Stack size: "));
+		    print_vma ((bfd_vma) (bfd_uint64_t) byte_get (descdata + 8, 8),
+			       DEC);
+		    printf ("\n");
+		    break;
+		  default:
+		    printf (_("    <unsupported GNU_PROPERTY_STACK_SIZE size: %ld>\n"),
+			    pr_datasz);
+		    break;
+		  }
+	      }
+
+	    /* Align to the next property.  */
+	    descdata += (8 + pr_datasz + align_mask) & ~align_mask;
+	  }
       }
       break;
     }
